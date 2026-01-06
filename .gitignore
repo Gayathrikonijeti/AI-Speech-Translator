@@ -1,0 +1,17 @@
+# Uploads (runtime generated files)
+backend/uploads/
+
+# Audio files
+*.wav
+*.mp3
+*.flac
+*.aac
+*.ogg
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.env
