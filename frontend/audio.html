@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Speech to Speech Translation</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(to right, #667eea, #764ba2);
+
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 60px;
+    }
+
+    .container {
+      width: 600px;
+      max-width: 90%;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 25px;
+    }
+
+    .block {
+      margin-bottom: 22px;
+    }
+
+    .label {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    select, input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 15px;
+    }
+
+    button {
+      width: 160px;
+      padding: 12px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #667eea;
+      color: white;
+    }
+
+    .box {
+      background: #f2f2f2;
+      padding: 12px;
+      min-height: 50px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    audio {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h2>Speech to Speech Translation</h2>
+
+    <div class="block">
+      <span class="label">Upload Audio File</span>
+      <input type="file" id="file" accept="audio/*">
+    </div>
+
+    <div class="block">
+      <span class="label">Select Target Language</span>
+      <select id="language">
+        <option value="hi">Hindi</option>
+        <option value="te">Telugu</option>
+        <option value="ta">Tamil</option>
+        <option value="kn">Kannada</option>
+        <option value="ml">Malayalam</option>
+        <option value="bn">Bengali</option>
+        <option value="mr">Marathi</option>
+        <option value="gu">Gujarati</option>
+        <option value="pa">Punjabi</option>
+        <option value="or">Odia</option>
+        <option value="ur">Urdu</option>
+        <option value="as">Assamese</option>
+      </select>
+    </div>
+
+
+    <div class="block">
+      <button onclick="upload()">Translate</button>
+    </div>
+
+  
+    <div class="block">
+      <h3>Original Text</h3>
+      <div class="box" id="original">---</div>
+    </div>
+
+  
+    <div class="block">
+      <h3>Translated Text</h3>
+      <div class="box" id="translated">---</div>
+    </div>
+
+
+    <div class="block">
+      <h3>Translated Audio</h3>
+      <audio id="audio" controls></audio>
+    </div>
+
+  </div>
+
+  <!-- ===== JS ===== -->
+  <script>
+    async function upload() {
+      const file = document.getElementById("file").files[0];
+      const lang = document.getElementById("language").value;
+
+      if (!file) {
+        alert("Please upload an audio file");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("audio", file);
+      formData.append("language", lang);
+
+      const res = await fetch("http://127.0.0.1:5000/translate", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      document.getElementById("original").innerText =
+        data.original_text || "---";
+
+      document.getElementById("translated").innerText =
+        data.translated_text || "---";
+
+      if (data.audio_url) {
+        const a = document.getElementById("audio");
+        a.src = "http://127.0.0.1:5000" + data.audio_url;
+        a.play();
+      }
+    }
+  </script>
+
+</body>
+</html>

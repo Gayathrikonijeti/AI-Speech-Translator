@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Speech to Speech Translation</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(to right, #667eea, #764ba2);
+
+      display: flex;
+      justify-content: center;     
+      align-items: flex-start;     
+      padding-top: 60px;
+    }
+
+    .container {
+      width: 600px;
+      max-width: 90%;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+
+
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 25px;
+    }
+
+    .block {
+      margin-bottom: 22px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 15px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    button {
+      width: 140px;
+      padding: 12px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .start {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .stop {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .box {
+      background: #f2f2f2;
+      padding: 12px;
+      min-height: 50px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    audio {
+      width: 100%;
+    }
+
+    .label {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  display: block;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- 1. HEADING -->
+    <h2>Speech to Speech Translation</h2>
+
+    <!-- 2. LANGUAGE SELECTION -->
+    <div class="block">
+      <span class="label">Select Target Language</span>
+      <select id="language">
+        <option value="hi">Hindi</option>
+        <option value="te">Telugu</option>
+        <option value="ta">Tamil</option>
+        <option value="kn">Kannada</option>
+        <option value="ml">Malayalam</option>
+        <option value="bn">Bengali</option>
+        <option value="mr">Marathi</option>
+        <option value="gu">Gujarati</option>
+        <option value="pa">Punjabi</option>
+        <option value="or">Odia</option>
+        <option value="ur">Urdu</option>
+        <option value="as">Assamese</option>
+      </select>
+    </div>
+
+    <!-- 3. START / STOP BUTTONS -->
+    <div class="block buttons">
+      <button class="start" onclick="startRecording()">Start</button>
+      <button class="stop" onclick="stopRecording()">Stop</button>
+    </div>
+
+    <!-- 4. ORIGINAL TEXT -->
+    <div class="block">
+      <h3>Original Text</h3>
+      <div class="box" id="original">---</div>
+    </div>
+
+    <!-- 5. TRANSLATED TEXT -->
+    <div class="block">
+      <h3>Translated Text</h3>
+      <div class="box" id="translated">---</div>
+    </div>
+
+    <!-- 6. TRANSLATED AUDIO -->
+    <div class="block">
+      <h3>Translated Audio</h3>
+      <audio id="audio" controls></audio>
+    </div>
+
+  </div>
+
+  <script>
+    let recorder;
+    let chunks = [];
+
+    async function startRecording() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recorder = new MediaRecorder(stream);
+      chunks = [];
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.start();
+    }
+
+    function stopRecording() {
+      recorder.stop();
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        const formData = new FormData();
+        formData.append("audio", blob);
+        formData.append("language", document.getElementById("language").value);
+
+        const res = await fetch("http://127.0.0.1:5000/translate", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        document.getElementById("original").innerText =
+          data.original_text || "---";
+
+        document.getElementById("translated").innerText =
+          data.translated_text || "---";
+
+        if (data.audio_url) {
+          const audio = document.getElementById("audio");
+          audio.src = "http://127.0.0.1:5000" + data.audio_url;
+          audio.play();
+        }
+      };
+    }
+  </script>
+
+</body>
+</html>
